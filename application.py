@@ -1,11 +1,15 @@
 import flask, json, simplejson
 import os
+from flask_cors import CORS
 import flask_login
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
 from sqlalchemy import and_, or_, func
 
 application = flask.Flask(__name__)
+CORS(application)
+
+ACTIVE_CACHE = {}
 
 application.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('CLEARDB_DATABASE_URL')
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -164,11 +168,11 @@ def hello_world():
 #     return ''
 
 
-@application.route('/score_campaigns')
-def score_campaigns():
-    execute_queries(TRAIN_ORDER)
-    db.session.commit()
-    return 'done!'
+# @application.route('/score_campaigns')
+# def score_campaigns():
+#     execute_queries(TRAIN_ORDER)
+#     db.session.commit()
+#     return 'done!'
 
 
 # @application.route('/contributors/<int:contributor_id>')
@@ -193,69 +197,69 @@ def page_not_found(e):
     return flask.render_template('index.html')
 
 
-@application.route('/run_names')
-def run_names():
-    start = 5970
-    finish = 5981
-    while True:
-        all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
-        if len(all_donations) == 0:
-            return ''
-        for donation in all_donations:
-            full_name = (donation.First_Name + ' ' + donation.Last_Business_Name)
-            donation.full_name = full_name
-            print(str(donation.Result) + ' ' + full_name)
-            db.session.add(donation)
-        start += 10
-        finish += 10
-        db.session.commit()
-        print(finish)
-
-
-@application.route('/run_campaigns')
-def run_campaigns():
-    start = 0
-    finish = 1001
-    while True:
-        all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
-        if len(all_donations) == 0:
-            return ''
-        for donation in all_donations:
-            print(donation.Result)
-            the_campaign = Campaign.query.filter(Campaign.name == donation.Name).first()
-            if not the_campaign:
-                print('creating ' + donation.Name)
-                new_campaign = Campaign()
-                new_campaign.name = donation.Name
-                db.session.add(new_campaign)
-                db.session.commit()
-        start += 1000
-        finish += 1000
-        print(finish)
-
-@application.route('/run_contributors')
-def run_contributors():
-    start = 0
-    finish = 1001
-    while True:
-        all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
-        if len(all_donations) == 0:
-            return ''
-        for donation in all_donations:
-            print(donation.Result)
-            full_name = donation.First_Name + ' ' + donation.Last_Business_Name
-            the_contributor = Contributor.query.filter(Contributor.full_name == full_name).first()
-            if not the_contributor:
-                print('creating ' + full_name)
-                new_contributor = Contributor()
-                new_contributor.Last_Business_Name = donation.Last_Business_Name
-                new_contributor.First_Name = donation.First_Name
-                new_contributor.full_name = full_name
-                db.session.add(new_contributor)
-                db.session.commit()
-        start += 1000
-        finish += 1000
-        print(finish)
+# @application.route('/run_names')
+# def run_names():
+#     start = 5970
+#     finish = 5981
+#     while True:
+#         all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
+#         if len(all_donations) == 0:
+#             return ''
+#         for donation in all_donations:
+#             full_name = (donation.First_Name + ' ' + donation.Last_Business_Name)
+#             donation.full_name = full_name
+#             print(str(donation.Result) + ' ' + full_name)
+#             db.session.add(donation)
+#         start += 10
+#         finish += 10
+#         db.session.commit()
+#         print(finish)
+#
+#
+# @application.route('/run_campaigns')
+# def run_campaigns():
+#     start = 0
+#     finish = 1001
+#     while True:
+#         all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
+#         if len(all_donations) == 0:
+#             return ''
+#         for donation in all_donations:
+#             print(donation.Result)
+#             the_campaign = Campaign.query.filter(Campaign.name == donation.Name).first()
+#             if not the_campaign:
+#                 print('creating ' + donation.Name)
+#                 new_campaign = Campaign()
+#                 new_campaign.name = donation.Name
+#                 db.session.add(new_campaign)
+#                 db.session.commit()
+#         start += 1000
+#         finish += 1000
+#         print(finish)
+#
+# @application.route('/run_contributors')
+# def run_contributors():
+#     start = 0
+#     finish = 1001
+#     while True:
+#         all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
+#         if len(all_donations) == 0:
+#             return ''
+#         for donation in all_donations:
+#             print(donation.Result)
+#             full_name = donation.First_Name + ' ' + donation.Last_Business_Name
+#             the_contributor = Contributor.query.filter(Contributor.full_name == full_name).first()
+#             if not the_contributor:
+#                 print('creating ' + full_name)
+#                 new_contributor = Contributor()
+#                 new_contributor.Last_Business_Name = donation.Last_Business_Name
+#                 new_contributor.First_Name = donation.First_Name
+#                 new_contributor.full_name = full_name
+#                 db.session.add(new_contributor)
+#                 db.session.commit()
+#         start += 1000
+#         finish += 1000
+#         print(finish)
 
 
 @application.route('/api/campaigns')
@@ -342,6 +346,17 @@ def login_user():
         resp = the_user.serialize()
     return resp
 
+
+@application.route('/api/voters/district/<int:district_id>')
+def fetch_district_voters(district_id):
+    result = ACTIVE_CACHE.get(str(district_id))
+    if not result:
+        voters = Voter.query.filter(Voter.district == district_id).all()
+        result = []
+        for each_voter in voters:
+            result.append(each_voter.as_dict())
+        ACTIVE_CACHE[str(district_id)] = result
+    return json.dumps(result)
 
 db = SQLAlchemy(application)
 
@@ -521,6 +536,25 @@ class Donor(db.Model, BaseModel):
             return self.lean
         else:
             return self.campaign.leans
+
+
+class Voter(db.Model, BaseModel):
+    __tablename__ = 'alaska'
+    id = db.Column(db.Integer, primary_key=True)
+    district = db.Column(db.Integer)
+    RESIDENCE_ZIP = db.Column(db.Integer)
+    voter_score = db.Column(db.Integer)
+    full_name = db.Column(db.String(255), index=True)
+    RESIDENCE_ADDRESS = db.Column(db.String(255))
+    contributor_id = db.Column(db.Integer, db.ForeignKey('contributors.id'), index=True, nullable=True)
+    precinct = db.Column(db.Integer)
+    # contributor = db.relationship(
+    #     'Contributor',
+    #     backref=db.backref('voter_contributions', lazy='dynamic')
+    # )
+
+    score = db.Column(db.Float)
+
 
 
 class User(db.Model, BaseModel, flask_login.UserMixin):
