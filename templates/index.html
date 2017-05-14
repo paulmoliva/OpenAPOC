@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Shark</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+    <div style="float: right; position: fixed; right: 1px; top: 1px; z-index:10; background: whitesmoke;" >Logged in as {{current_user.name}} - <a href="/logout">Log out</a></div>
+    <script> window.userName = "{{ current_user.name }}" </script>
+    <div id="react-root"></div>
+    <script src="/static/main.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>
