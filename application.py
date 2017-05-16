@@ -36,10 +36,9 @@ def login():
         user = User.query.filter(User.name == form['username']).first()
         if bcrypt.checkpw(form.get('password').encode('utf-8'), user.password.encode('utf-8')):
             flask_login.login_user(user)
-            next = flask.request.args.get('next')
         else:
-            flask.abort(401)
-        return flask.redirect(next or '/')
+            flask.render_template('login.html', form=form)
+        return flask.redirect('/')
     return flask.render_template('login.html', form=form)
 
 
@@ -192,9 +191,13 @@ def hello_world():
 #         donors=the_donors
 #     )
 
+
 @application.errorhandler(404)
 def page_not_found(e):
-    return flask.render_template('index.html')
+    if flask_login.current_user.is_authenticated:
+        return flask.render_template('index.html')
+    else:
+        return flask.render_template('login.html')
 
 
 # @application.route('/run_names')
