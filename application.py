@@ -551,6 +551,7 @@ class Voter(db.Model, BaseModel):
     RESIDENCE_ADDRESS = db.Column(db.String(255))
     contributor_id = db.Column(db.Integer, db.ForeignKey('contributors.id'), index=True, nullable=True)
     precinct = db.Column(db.Integer)
+    PARTY = db.Column(db.String(255))
     # contributor = db.relationship(
     #     'Contributor',
     #     backref=db.backref('voter_contributions', lazy='dynamic')
