@@ -558,6 +558,7 @@ class Voter(db.Model, BaseModel):
     # )
 
     score = db.Column(db.Float)
+    score_guess = db.Column(db.Float)
 
 
 
