@@ -84,8 +84,10 @@ celerybeat-schedule
 # dotenv
 .env
 
-.csv
-.gz
+*.csv
+*.gz
+*.numbers
+.DS_Store
 
 # virtualenv
 .venv
