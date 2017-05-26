@@ -549,6 +549,7 @@ class Voter(db.Model, BaseModel):
     voter_score = db.Column(db.Integer)
     full_name = db.Column(db.String(255), index=True)
     RESIDENCE_ADDRESS = db.Column(db.String(255))
+    RESIDENCE_CITY = db.Column(db.String(255))
     contributor_id = db.Column(db.Integer, db.ForeignKey('contributors.id'), index=True, nullable=True)
     precinct = db.Column(db.Integer)
     PARTY = db.Column(db.String(255))
