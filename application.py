@@ -74,11 +74,11 @@ def logout():
 
 
 SCORE_QUERY = '''
-update contributors as t
-set t.score = (
-	select sum(cast(donors.Amount as decimal) * (case donors.lean when 'r' then -1 when 'l' then 1 else 0 END))
-	from donors
-	where donors.full_name = t.full_name
+update van as t
+set t.donor_score = (
+	select (sum(apoc.`total_amount`) * (case apoc.lean when 'r' then -1 when 'l' then 1 else 0 END))
+	from apoc
+	where apoc.`van_id` = t.`VANID`
 );
 '''
 
@@ -219,26 +219,27 @@ def page_not_found(e):
 #         print(finish)
 #
 #
-# @application.route('/run_campaigns')
-# def run_campaigns():
-#     start = 0
-#     finish = 1001
-#     while True:
-#         all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
-#         if len(all_donations) == 0:
-#             return ''
-#         for donation in all_donations:
-#             print(donation.Result)
-#             the_campaign = Campaign.query.filter(Campaign.name == donation.Name).first()
-#             if not the_campaign:
-#                 print('creating ' + donation.Name)
-#                 new_campaign = Campaign()
-#                 new_campaign.name = donation.Name
-#                 db.session.add(new_campaign)
-#                 db.session.commit()
-#         start += 1000
-#         finish += 1000
-#         print(finish)
+@application.route('/run_campaigns')
+def run_campaigns():
+    offset = 83216
+    start = 455050 + offset
+    finish = 456051 + offset
+    while True:
+        all_donations = APOC.query.filter(and_(APOC.id < finish, APOC.id > start)).all()
+        if len(all_donations) == 0:
+            return ''
+        for donation in all_donations:
+            print(donation.id)
+            the_campaign = Campaign.query.filter(Campaign.name == donation.Name).first()
+            if not the_campaign:
+                print('creating ' + donation.Name)
+                new_campaign = Campaign()
+                new_campaign.name = donation.Name
+                db.session.add(new_campaign)
+                db.session.commit()
+        start += 1000
+        finish += 1000
+        print(finish)
 #
 # @application.route('/run_contributors')
 # def run_contributors():
@@ -354,7 +355,7 @@ def login_user():
 def fetch_district_voters(district_id):
     result = ACTIVE_CACHE.get(str(district_id))
     if not result:
-        voters = Voter.query.filter(Voter.district == district_id).all()
+        voters = Van.query.filter(Van.HD == district_id).all()
         result = []
         for each_voter in voters:
             result.append(each_voter.as_dict())
@@ -368,7 +369,7 @@ class BaseModel:
     def as_dict(self):
         result = {}
         for attr, value in self.__dict__.items():
-            if not value:
+            if not value and value != 0:
                 result[attr] = None
             else:
                 try:
@@ -521,14 +522,14 @@ class Donor(db.Model, BaseModel):
     lean = db.Column(db.String(1))
     campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), index=True, nullable=True)
     full_name = db.Column(db.String(255), index=True, nullable=True)
-    campaign = db.relationship(
-        'Campaign',
-        backref=db.backref('contributions', lazy='dynamic')
-    )
-    contributor = db.relationship(
-        'Contributor',
-        backref=db.backref('contributions', lazy='dynamic')
-    )
+    # campaign = db.relationship(
+    #     'Campaign',
+    #     backref=db.backref('contributions', lazy='dynamic')
+    # )
+    # contributor = db.relationship(
+    #     'Contributor',
+    #     backref=db.backref('contributions', lazy='dynamic')
+    # )
 
     def __init__(self):
         self.full_name = self.First_Name + ' ' + self.Last_Business_Name
@@ -566,6 +567,76 @@ class Voter(db.Model, BaseModel):
     score = db.Column(db.Float)
     score_guess = db.Column(db.Float)
 
+
+class Van(db.Model, BaseModel):
+    __tablename__ = 'van'
+
+    VANID = db.Column(db.Integer, primary_key=True)
+    PreferredEmail = db.Column(db.String(255))
+    PreferredPhone = db.Column(db.String(255))
+    full_name = db.Column(db.String(255))
+    HD = db.Column(db.String(255))
+    SD = db.Column(db.String(255))
+    party = db.Column(db.String(255))
+
+    donor_score = db.Column(db.Integer)
+    score_guess = db.Column(db.Integer)
+    avg_contribution = db.Column(db.Integer)
+    total_amount = db.Column(db.Integer)
+    precinct = db.Column(db.Integer)
+    num_contributions = db.Column(db.Integer)
+    num_votes = db.Column(db.Integer)
+
+
+    # contributor = db.relationship(
+    #     'Contributor',
+    #     backref=db.backref('voter_contributions', lazy='dynamic')
+    # )
+
+
+class APOC(db.Model, BaseModel):
+    __tablename__ = 'apoc'
+
+    id = db.Column(db.Integer, primary_key=True)
+    van_id = db.Column(db.Integer, db.ForeignKey('van.VANID'))
+    van = db.relationship(
+        'Van',
+        backref=db.backref('contributions', lazy='dynamic')
+    )
+
+    #begin copypasta
+    Result = db.Column(db.Integer)
+    Date = db.Column(db.String(255))
+    Transaction_Type = db.Column(db.String(255))
+    Payment_Type = db.Column(db.String(255))
+    Payment_Detail = db.Column(db.String(255))
+    Amount = db.Column(db.String(255))
+    Last_Business_Name = db.Column(db.String(255))
+    First_Name = db.Column(db.String(255))
+    Address = db.Column(db.String(255))
+    City = db.Column(db.String(255))
+    State = db.Column(db.String(255))
+    Zip = db.Column(db.String(255))
+    Country = db.Column(db.String(255))
+    Occupation = db.Column(db.String(255))
+    Employer = db.Column(db.String(255))
+    Purpose_of_Expenditure = db.Column(db.String(255))
+    Report_Type = db.Column(db.String(255))
+    Election_Name = db.Column(db.String(255))
+    Election_Type = db.Column(db.String(255))
+    Municipality = db.Column(db.String(255))
+    Office = db.Column(db.String(255))
+    Filer_Type = db.Column(db.String(255))
+    Name = db.Column(db.String(255), index=True, nullable=True)
+    Report_Year = db.Column(db.String(255))
+    Submitted = db.Column(db.String(255))
+
+    contributor_score = db.Column(db.Float)
+    contributor_id = db.Column(db.Integer, db.ForeignKey('contributors.id'), index=True, nullable=True)
+    total_amount = db.Column(db.Float)
+    lean = db.Column(db.String(1))
+    campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), index=True, nullable=True)
+    full_name = db.Column(db.String(255), index=True, nullable=True)
 
 
 class User(db.Model, BaseModel, flask_login.UserMixin):
