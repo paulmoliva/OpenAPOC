@@ -281,25 +281,24 @@ def dump_campaigns():
 
 @application.route('/api/campaigns/<int:campaign_id>/')
 def dump_campaign(campaign_id):
-    the_donors = db.session.query(Donor.Result, Donor.full_name, func.sum(Donor.total_amount), Donor.Report_Year, Donor.contributor_score, Donor.contributor_id).filter(Donor.campaign_id == campaign_id).group_by(Donor.contributor_id, Donor.Report_Year).all()
+    the_donors = db.session.query(
+        APOC
+    )\
+        .filter(APOC.campaign_id == campaign_id).group_by(APOC.van_id, APOC.Report_Year).all()
     result = []
     for each_donor in the_donors:
-        if not each_donor.contributor_score:
-            contributor_score = 0
-            contributor_id = 0
-        else:
-            contributor_score = int(each_donor.contributor_score)
-            contributor_id = int(each_donor.contributor_id)
         result.append({
-            "Result": each_donor.Result,
+            "id": each_donor.id,
             "full_name": each_donor.full_name,
-            "total_amount": int(each_donor[2]),
+            "total_amount": int(each_donor.total_amount),
             "Report_Year": each_donor.Report_Year,
-            "contributor_score": contributor_score,
-            "contributor_id": contributor_id
+            "contributor_score": int(each_donor.contributor_score or 0),
+            "avg_contribution": int(each_donor.avg_contribution or 0),
+            "van_id": each_donor.van_id,
+            "PreferredPhone": each_donor.PreferredPhone
         })
-    the_campagign = Campaign.query.get(campaign_id).as_dict()
-    return json.dumps({'contributions': result, 'info': the_campagign})
+    the_campaign = Campaign.query.get(campaign_id).as_dict()
+    return json.dumps({'contributions': result, 'info': the_campaign})
 
 
 @application.route('/api/campaigns/<int:campaign_id>/info')
@@ -319,11 +318,11 @@ def dump_contributors():
 
 @application.route('/api/contributors/<int:contributor_id>')
 def dump_contributor(contributor_id):
-    the_donors = Donor.query.filter(Donor.contributor_id == contributor_id).all()
+    the_donors = APOC.query.filter(APOC.van_id == contributor_id).all()
     result = []
     for each_donor in the_donors:
         result.append(each_donor.as_dict())
-    the_contributor = Contributor.query.get(contributor_id).as_dict()
+    the_contributor = Van.query.get(contributor_id).as_dict()
     return json.dumps({'contributions': result, 'contributor': the_contributor})
 
 
@@ -331,7 +330,7 @@ def dump_contributor(contributor_id):
 def search_contributors():
     search_term = flask.request.args.get('search')
     form_submit = flask.request.args.get('formSubmit')
-    return Contributor.find_by_name(search_term, None, form_submit)
+    return Van.find_by_name(search_term, None, form_submit)
 
 
 @application.route('/api/login')
@@ -578,6 +577,11 @@ class Van(db.Model, BaseModel):
     HD = db.Column(db.String(255))
     SD = db.Column(db.String(255))
     party = db.Column(db.String(255))
+    vAddress = db.Column(db.String(255))
+    City = db.Column(db.String(255))
+    State = db.Column(db.String(255))
+    Zip5 = db.Column(db.String(255))
+    Zip4 = db.Column(db.String(255))
 
     donor_score = db.Column(db.Integer)
     score_guess = db.Column(db.Integer)
@@ -586,6 +590,28 @@ class Van(db.Model, BaseModel):
     precinct = db.Column(db.Integer)
     num_contributions = db.Column(db.Integer)
     num_votes = db.Column(db.Integer)
+    gave_to_adp = db.Column(db.Integer)
+
+    @classmethod
+    def find_by_name(cls, search_term, order_by=None, form_submit=None):
+        if order_by:
+            order_attr = getattr(cls, order_by)
+        else:
+            order_attr = cls.full_name
+        or_statement = and_(
+            cls.full_name.ilike('%{0}%'.format(search_term)),
+            cls.num_contributions > 0
+        )
+        results = cls.query.filter(or_statement).order_by(order_attr).limit(500).all()
+        final_array_to_return = [x.as_dict() for x in results]
+        if not len(final_array_to_return):
+            final_array_to_return.append({
+                "id": 0,
+                "full_name": "No Results",
+                "score": '-1'
+            })
+        final_array_to_return[0]['formSubmit'] = form_submit
+        return json.dumps(final_array_to_return)
 
 
     # contributor = db.relationship(
@@ -632,11 +658,14 @@ class APOC(db.Model, BaseModel):
     Submitted = db.Column(db.String(255))
 
     contributor_score = db.Column(db.Float)
+    avg_contribution = db.Column(db.Integer)
     contributor_id = db.Column(db.Integer, db.ForeignKey('contributors.id'), index=True, nullable=True)
     total_amount = db.Column(db.Float)
     lean = db.Column(db.String(1))
     campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), index=True, nullable=True)
     full_name = db.Column(db.String(255), index=True, nullable=True)
+    PreferredPhone = db.Column(db.String(255))
+
 
 
 class User(db.Model, BaseModel, flask_login.UserMixin):
