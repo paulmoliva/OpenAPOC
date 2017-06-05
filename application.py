@@ -36,9 +36,9 @@ def login():
         user = User.query.filter(User.name == form['username']).first()
         if bcrypt.checkpw(form.get('password').encode('utf-8'), user.password.encode('utf-8')):
             flask_login.login_user(user)
+            return flask.redirect('/')
         else:
-            flask.render_template('login.html', form=form)
-        return flask.redirect('/')
+            return flask.render_template('login.html', form=form, error="Problem logging you in. Please try again.")
     return flask.render_template('login.html', form=form)
 
 
@@ -69,7 +69,7 @@ def signup():
 @application.route('/logout')
 def logout():
     flask_login.logout_user()
-    return flask.redirect('/')
+    return flask.redirect('/login')
 
 
 
@@ -83,11 +83,15 @@ set t.donor_score = (
 '''
 
 ADD_TO_SCORE_QUERY = '''
-update contributors as t
-set t.add_to_score = -1 where score < -1;
-
-update contributors as t
-set t.add_to_score = 1 where score > 1;
+update van as t
+set t.add_to_score =
+    case t.donor_score < -1
+        when true then -1
+        else
+            case t.donor_score > 1
+                when true then 1 else 0
+            end
+    end
 '''
 
 DONORS_LEAN_QUERY ='''
@@ -100,19 +104,25 @@ set lean = (
 LEANS_QUERY = '''
 update campaigns as t
 set leans =
-    case ((select sum(con.add_to_score) from contributors con
-    join donors d on d.full_name = con.full_name
+    case ((select sum(con.add_to_score) from van con
+    join apoc d on d.van_id = con.VANID
     where d.campaign_id = t.id
     ) < -1) when true then 'r' else case((select sum(con.add_to_score) from contributors con
-    join donors d on d.full_name = con.full_name
+    join apoc d on d.van_id = con.VANID
     where d.campaign_id = t.id
     ) > 1) when true then 'l' else null end end,
 
 score =
-    (select sum(con.add_to_score) from contributors con
-    join donors d on d.full_name = con.full_name
+    (select sum(con.add_to_score) from van con
+    join apoc d on d.van_id = con.VANID
     where d.campaign_id = t.id
     );
+'''
+
+UPDATE_VOTES_QUERY = '''
+update van as t set primary_votes =
+    cast(t.`Primary98` as decimal) + cast(t.`Primary00` as decimal) + cast(t.`Primary02` as decimal) + cast(t.`Primary04` as decimal) + cast(t.`Primary06` as decimal) + cast(t.`Primary08` as decimal) + cast(t.`Primary10` as decimal) + cast(t.`Primary12` as decimal) + cast(t.`Primary14` as decimal) + cast(t.`Primary16` as decimal)
+)
 '''
 
 TRAIN_ORDER = [DONORS_LEAN_QUERY, SCORE_QUERY, ADD_TO_SCORE_QUERY, LEANS_QUERY]
@@ -123,6 +133,16 @@ def privacy():
 
 @application.route('/')
 def hello_world():
+    if flask_login.current_user.is_authenticated:
+        return flask.render_template(
+            'index.html'
+        )
+    else:
+        return flask.render_template(
+            'landing.html'
+        )
+@application.route('/login')
+def login_page():
     if flask_login.current_user.is_authenticated:
         return flask.render_template(
             'index.html'
