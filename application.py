@@ -1,4 +1,5 @@
 import flask, json, simplejson
+import dwollav2, dwollaswagger
 import os
 from flask_cors import CORS
 import flask_login
@@ -126,6 +127,35 @@ update van as t set primary_votes =
 '''
 
 TRAIN_ORDER = [DONORS_LEAN_QUERY, SCORE_QUERY, ADD_TO_SCORE_QUERY, LEANS_QUERY]
+
+@application.route('/dwolla')
+def dwolla():
+    client = dwollav2.Client(
+        key=os.environ['DWOLLA_APP_KEY'],
+        secret=os.environ['DWOLLA_APP_SECRET'],
+        environment='sandbox'
+    )
+
+    swag_client = dwollaswagger.ApiClient()
+
+    #app_token = client.Auth.client()
+
+    #account_token = client.Token(access_token=os.environ['DWOLLA_ACCESS_TOKEN'], refresh_token=os.environ['DWOLLA_ACCESS_TOKEN'])
+
+    dwollaswagger.configuration.access_token = os.environ['DWOLLA_ACCESS_TOKEN']
+
+    # For UAT/Sandbox
+    client = dwollaswagger.ApiClient('https://api-uat.dwolla.com')
+
+    customer_id = '3eef30d3-5829-499e-80af-0e60e8714e6e'
+
+    customer_url = 'http://api.dwolla.com/customers/{0}'.format(customer_id)
+    customers_api = dwollaswagger.CustomersApi(client)
+
+    token = customers_api.create_funding_sources_token_for_customer(customer_url)
+
+    return flask.render_template('bank.html', token=token.get('token'))
+
 
 @application.route('/privacy')
 def privacy():

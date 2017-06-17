@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="google-site-verification" content="MapgD8Pz8VGHC4txXHUfcXLXaYFGP0_Rhg9AKPXYvQ0" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>DataShark</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/static/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom Google Web Font -->
+    <link href="/static/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+    <!-- Add custom CSS here -->
+    <link href="static/landing-page.css" rel="stylesheet">
+
+    <!-- favicon -->
+    <link rel="icon" type="image/png" href="/static/img/favicon.png" />
+
+    <!-- Dwolla.ja-->
+    <script src="https://cdn.dwolla.com/1/dwolla.min.js"></script>
+
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+      integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
+      crossorigin="anonymous">
+    </script>
+
+</head>
+
+<body>
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">DataShark</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse navbar-right navbar-ex1-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#contact-info">About</a>
+                    </li>
+                    <li><a href="/#services">Services</a>
+                    </li>
+                    <li><a href="#contact-info">Contact</a>
+                    </li>
+                    <li><a href="/login">Login</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <div style="margin-top: 100px; padding: 6px">
+        <form>
+          <div>
+            <label>Routing number</label>
+            <input type="text" id="routingNumber" placeholder="273222226" />
+          </div>
+          <div>
+            <label>Account number</label>
+            <input type="text" id="accountNumber" placeholder="Account number" />
+          </div>
+          <div>
+            <label>Bank account name</label>
+            <input type="text" id="name" placeholder="Name" />
+          </div>
+          <div>
+            <select name="type" id="type">
+              <option value="checking">Checking</option>
+              <option value="savings">Savings</option>
+            </select>
+          </div>
+          <div>
+            <input type="submit" value="Add Bank">
+          </div>
+        </form>
+
+        <div id="logs">
+        </div>
+    </div>
+
+    <div id="iavContainer"></div>
+
+<div class="banner">
+
+        <div class="container">
+
+            <div class="row">
+                <div id="contact-info" class="col-lg-6">
+                    <h2>Connect to DataShark:</h2>
+                </div>
+                <div class="col-lg-6">
+                    <ul class="list-inline banner-social-buttons">
+                        <li><a href="mailto:paulmoliva@gmail.com" class="btn btn-default btn-lg"><i class="fa fa-envelope fa-fw"></i> <span class="network-name">Email</span></a>
+                        <li><a href="mailto:paulmoliva@gmail.com" class="btn btn-default btn-lg"><i class="fa fa-laptop fa-fw"></i> <span class="network-name">Book a Demo</span></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+        <!-- /.container -->
+
+    </div>
+    <!-- /.banner -->
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="list-inline">
+                        <li><a href="/">Home</a>
+                        </li>
+                        <li class="footer-menu-divider">&sdot;</li>
+                        <li><a href="#contact-info">About</a>
+                        </li>
+                        <li class="footer-menu-divider">&sdot;</li>
+                        <li><a href="/#services">Services</a>
+                        </li>
+                        <li class="footer-menu-divider">&sdot;</li>
+                        <li><a href="#contact-info">Contact</a>
+                        </li>
+                    </ul>
+                    <p class="copyright text-muted small">Copyright &copy; DataShark LLC 2017. All Rights Reserved</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/static/js/jquery-1.10.2.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+    <script>
+        dwolla.iav.start('{{token}}', {
+          container: 'iavContainer',
+          stylesheets: [
+            'https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext',
+          ],
+          microDeposits: false,
+          fallbackToMicroDeposits: true,
+          backButton: true,
+          subscriber: ({ currentPage, error }) => {
+              console.log('currentPage:', currentPage, 'error:', JSON.stringify(error))
+            }
+        }, function(err, res) {
+          console.log('Error: ' + JSON.stringify(err) + ' -- Response: ' + JSON.stringify(res));
+        });
+
+        $('form').on('submit', function() {
+          dwolla.configure('sandbox');
+          var token = '{{token}}';
+          var bankInfo = {
+            routingNumber: $('#routingNumber').val(),
+            accountNumber: $('#accountNumber').val(),
+            type: $('#type').val(),
+            name: $('#name').val()
+          }
+          dwolla.fundingSources.create(token, bankInfo, callback);
+          return false;
+        });
+
+        function callback(err, res) {
+          var $div = $('<div />');
+          var logValue = {
+            error: err,
+            response: res
+          };
+          $div.text(JSON.stringify(logValue));
+          console.log(logValue);
+          $('#logs').append($div);
+        }
+    </script>
+
+</body>
+
+</html>
+
