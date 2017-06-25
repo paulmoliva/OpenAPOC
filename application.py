@@ -161,6 +161,7 @@ def dwolla():
 def privacy():
     return flask.render_template('privacypolicy.htm')
 
+
 @application.route('/')
 def hello_world():
     if flask_login.current_user.is_authenticated:
@@ -171,6 +172,8 @@ def hello_world():
         return flask.render_template(
             'landing.html'
         )
+
+
 @application.route('/login')
 def login_page():
     if flask_login.current_user.is_authenticated:
@@ -181,6 +184,13 @@ def login_page():
         return flask.render_template(
             'login.html'
         )
+
+
+@application.route('/about')
+def about_page():
+    return flask.render_template(
+        'about.html'
+    )
 
 
 # @application.route('/top')
