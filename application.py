@@ -331,11 +331,7 @@ def dump_campaigns():
     all_the_campaigns = Campaign.query.all()
     result = []
     for each_campaign in all_the_campaigns:
-        result.append({
-            'id': each_campaign.id,
-            'name': each_campaign.name,
-            'leans': each_campaign.leans
-        })
+        result.append(each_campaign.as_dict())
     return json.dumps(result)
 
 
@@ -455,6 +451,9 @@ class Campaign(db.Model, BaseModel):
     __tablename__ = 'campaigns'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), index=True)
+    election_type = db.Column(db.String(255), index=True)
+    muni = db.Column(db.String(255), index=True)
+    office = db.Column(db.String(255), index=True)
     leans = db.Column(db.String(1))
     score = db.Column(db.Float)
 
