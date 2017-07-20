@@ -355,7 +355,8 @@ def dump_campaign(campaign_id):
             "contributor_score": int(each_donor.contributor_score or 0),
             "avg_contribution": int(each_donor.avg_contribution or 0),
             "van_id": each_donor.van_id,
-            "PreferredPhone": each_donor.PreferredPhone
+            "PreferredPhone": each_donor.PreferredPhone,
+            "district": each_donor.HD
         })
     the_campaign = Campaign.query.get(campaign_id).as_dict()
     return json.dumps({'contributions': result, 'info': the_campaign})
@@ -384,6 +385,15 @@ def dump_contributor(contributor_id):
         result.append(each_donor.as_dict())
     the_contributor = Van.query.get(contributor_id).as_dict()
     return json.dumps({'contributions': result, 'contributor': the_contributor})
+
+
+@application.route('/api/contributors/<int:contributor_id>/activist_codes')
+def fetch_activist_codes(contributor_id):
+    the_codes = ActivistCodes.query.filter(ActivistCodes.VANID == contributor_id).all()
+    result = []
+    for each_code in the_codes:
+        result.append(each_code.as_dict())
+    return simplejson.dumps(result)
 
 
 @application.route('/api/contributors/search')
@@ -679,6 +689,15 @@ class Van(db.Model, BaseModel):
     #     backref=db.backref('voter_contributions', lazy='dynamic')
     # )
 
+class ActivistCodes(db.Model, BaseModel):
+    __tablename__ = 'activist_codes'
+
+    ActivistCodeID = db.Column(db.Integer, primary_key=True)
+    VANID = db.Column(db.Integer)
+    ActivistCodeName = db.Column(db.String(255))
+    ActivistCodeDescription = db.Column(db.String(255))
+    DateCreated = db.Column(db.String(255))
+
 
 class APOC(db.Model, BaseModel):
     __tablename__ = 'apoc'
@@ -719,6 +738,7 @@ class APOC(db.Model, BaseModel):
 
     contributor_score = db.Column(db.Float)
     avg_contribution = db.Column(db.Integer)
+    HD = db.Column(db.Integer)
     contributor_id = db.Column(db.Integer, db.ForeignKey('contributors.id'), index=True, nullable=True)
     total_amount = db.Column(db.Float)
     lean = db.Column(db.String(1))
