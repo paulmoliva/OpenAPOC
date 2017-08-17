@@ -392,6 +392,15 @@ def fetch_activist_codes(contributor_id):
     return simplejson.dumps(result)
 
 
+@application.route('/api/contributors/<int:contributor_id>/survey_responses')
+def fetch_survey_responses(contributor_id):
+    the_responses = SurveyResponses.query.filter(SurveyResponses.VANID == contributor_id).all()
+    result = []
+    for each_response in the_responses:
+        result.append(each_response.as_dict())
+    return simplejson.dumps(result)
+
+
 @application.route('/api/contributors/search')
 def search_contributors():
     search_term = flask.request.args.get('search')
@@ -695,6 +704,16 @@ class ActivistCodes(db.Model, BaseModel):
     VANID = db.Column(db.Integer)
     ActivistCodeName = db.Column(db.String(255))
     ActivistCodeDescription = db.Column(db.String(255))
+    DateCreated = db.Column(db.String(255))
+
+
+class SurveyResponses(db.Model, BaseModel):
+    __tablename__ = 'survey_responses'
+
+    SurveyQuestionId = db.Column(db.Integer, primary_key=True)
+    VANID = db.Column(db.Integer)
+    SurveyQuestionLongName = db.Column(db.String(255))
+    SurveyResponseName = db.Column(db.String(255))
     DateCreated = db.Column(db.String(255))
 
 
