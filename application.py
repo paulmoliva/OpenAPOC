@@ -164,14 +164,9 @@ def privacy():
 
 @application.route('/')
 def hello_world():
-    if flask_login.current_user.is_authenticated:
-        return flask.render_template(
-            'index.html'
-        )
-    else:
-        return flask.render_template(
-            'landing.html'
-        )
+    return flask.render_template(
+        'index.html'
+    )
 
 
 @application.route('/login')
