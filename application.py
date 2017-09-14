@@ -400,7 +400,7 @@ def fetch_survey_responses(contributor_id):
 def search_contributors():
     search_term = flask.request.args.get('search')
     form_submit = flask.request.args.get('formSubmit')
-    return Van.find_by_name(search_term, None, form_submit)
+    return Contributor.find_by_name(search_term, None, form_submit)
 
 
 @application.route('/api/login')
