@@ -370,11 +370,11 @@ def dump_contributors():
 
 @application.route('/api/contributors/<int:contributor_id>')
 def dump_contributor(contributor_id):
-    the_donors = APOC.query.filter(APOC.van_id == contributor_id).all()
+    the_donors = APOC.query.filter(APOC.contributor_id == contributor_id).all()
     result = []
     for each_donor in the_donors:
         result.append(each_donor.as_dict())
-    the_contributor = Van.query.get(contributor_id).as_dict()
+    the_contributor = Contributor.query.get(contributor_id).as_dict()
     return json.dumps({'contributions': result, 'contributor': the_contributor})
 
 
@@ -511,11 +511,13 @@ class Contributor(db.Model, BaseModel):
     full_name = db.Column(db.String(255), index=True)
     Last_Business_Name = db.Column(db.String(255))
     First_Name = db.Column(db.String(255))
+    address = db.Column(db.String(255))
     score = db.Column(db.Float)
     add_to_score = db.Column(db.Float)
     avg_score = db.Column(db.Float)
     avg_donation = db.Column(db.Float)
     total = db.Column(db.Float)
+    count = db.Column(db.Float)
     is_person = db.Column(db.Boolean)
 
     def get_score(self):
