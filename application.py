@@ -335,11 +335,12 @@ def dump_campaign(campaign_id):
     the_donors = db.session.query(
         APOC
     )\
-        .filter(APOC.campaign_id == campaign_id).group_by(APOC.van_id, APOC.Report_Year).all()
+        .filter(APOC.campaign_id == campaign_id).group_by(APOC.contributor_id, APOC.Report_Year).all()
     result = []
     for each_donor in the_donors:
         result.append({
             "id": each_donor.id,
+            "contributor_id": each_donor.contributor_id,
             "full_name": each_donor.full_name,
             "total_amount": int(each_donor.total_amount),
             "Report_Year": each_donor.Report_Year,
