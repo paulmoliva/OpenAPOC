@@ -98,15 +98,16 @@ def page_not_found(e):
 
 @application.route('/run_campaigns')
 def run_campaigns():
-    offset = 83216
-    start = 455050 + offset
-    finish = 456051 + offset
+    offset = 0
+    start = 990000 + offset
+    finish = 991001 + offset
     while True:
         all_donations = APOC.query.filter(and_(APOC.id < finish, APOC.id > start)).all()
         if len(all_donations) == 0:
             return ''
         for donation in all_donations:
             print(donation.id)
+            print(donation.Date)
             the_campaign = Campaign.query.filter(Campaign.name == donation.Name).first()
             if not the_campaign:
                 print('creating ' + donation.Name)
