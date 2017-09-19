@@ -2,7 +2,6 @@ import flask, json, simplejson
 import dwollav2, dwollaswagger
 import os
 from flask_cors import CORS
-import flask_login
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
 from sqlalchemy import and_, or_, func
