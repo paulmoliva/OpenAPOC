@@ -356,8 +356,8 @@ def dump_campaign(campaign_id):
 
 @application.route('/api/campaigns/<int:campaign_id>/info')
 def dump_campaign_info(campaign_id):
-    the_campagign = Campaign.query.get(campaign_id).as_dict()
-    return json.dumps(the_campagign)
+    the_campaign = Campaign.query.get(campaign_id).as_dict()
+    return json.dumps(the_campaign)
 
 
 @application.route('/api/contributors')
