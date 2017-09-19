@@ -202,23 +202,6 @@ def search_contributors():
     return Contributor.find_by_name(search_term, None, form_submit)
 
 
-@application.route('/api/login')
-def login_user():
-    params = flask.request.args
-    user_id = int(params.get('id'))
-    the_user = User.query.filter(User.id == user_id).first()
-    if not the_user:
-        the_user = User()
-        the_user.id = user_id
-        the_user.name = params.get('name')
-        db.session.add(the_user)
-        resp = the_user.serialize()
-        db.session.commit()
-    else:
-        resp = the_user.serialize()
-    return resp
-
-
 @application.route('/api/voters/district/<int:district_id>')
 def fetch_district_voters(district_id):
     result = ACTIVE_CACHE.get(str(district_id))
@@ -559,21 +542,6 @@ class APOC(db.Model, BaseModel):
     campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), index=True, nullable=True)
     full_name = db.Column(db.String(255), index=True, nullable=True)
     PreferredPhone = db.Column(db.String(255))
-
-
-
-class User(db.Model, BaseModel, flask_login.UserMixin):
-    __tablename__ = 'users'
-
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    name = db.Column(db.String(255), index=True)
-    password = db.Column(db.String(255))
-
-    def serialize(self):
-        return json.dumps({
-            "id": self.id,
-            "name": self.name
-        })
 
 
 def execute_sql(query):
