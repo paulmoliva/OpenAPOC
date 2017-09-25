@@ -13,8 +13,6 @@ application.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('CLEARDB_DATABASE_URL'
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 application.secret_key = os.getenv('SECRET_KEY') or 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
-db = SQLAlchemy(application)
-
 
 SCORE_QUERY = '''
 update van as t
@@ -215,6 +213,8 @@ def fetch_district_voters(district_id):
             result.append(each_voter.as_dict())
         ACTIVE_CACHE[str(district_id)] = result
     return json.dumps(result)
+
+db = SQLAlchemy(application)
 
 
 class BaseModel:
