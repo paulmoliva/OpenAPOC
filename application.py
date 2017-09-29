@@ -27,13 +27,8 @@ def load_user(user_id):
 
 @application.route('/login', methods=['GET', 'POST'])
 def login():
-    # Here we use a class of some kind to represent and validate our
-    # client-side form data. For example, WTForms is a library that will
-    # handle this for us, and we use a custom LoginForm to validate.
     form = flask.request.form
     if form.get('username'):
-        # Login and validate the user.
-        # user should be an instance of your `User` class
         user = User.query.filter(User.name == form['username']).first()
         if bcrypt.checkpw(form.get('password').encode('utf-8'), user.password.encode('utf-8')):
             flask_login.login_user(user)
@@ -45,13 +40,8 @@ def login():
 
 @application.route('/signup', methods=['GET', 'POST'])
 def signup():
-    # Here we use a class of some kind to represent and validate our
-    # client-side form data. For example, WTForms is a library that will
-    # handle this for us, and we use a custom LoginForm to validate.
     form = flask.request.form
     if form.get('username'):
-        # Login and validate the user.
-        # user should be an instance of your `User` class
         user = User.query.filter(User.name == form['username']).first()
         if user:
             return flask.Response('User exists!', 401)
@@ -71,7 +61,6 @@ def signup():
 def logout():
     flask_login.logout_user()
     return flask.redirect('/login')
-
 
 
 SCORE_QUERY = '''
@@ -128,34 +117,6 @@ update van as t set primary_votes =
 
 TRAIN_ORDER = [DONORS_LEAN_QUERY, SCORE_QUERY, ADD_TO_SCORE_QUERY, LEANS_QUERY]
 
-@application.route('/dwolla')
-def dwolla():
-    client = dwollav2.Client(
-        key=os.environ['DWOLLA_APP_KEY'],
-        secret=os.environ['DWOLLA_APP_SECRET'],
-        environment='sandbox'
-    )
-
-    swag_client = dwollaswagger.ApiClient()
-
-    #app_token = client.Auth.client()
-
-    #account_token = client.Token(access_token=os.environ['DWOLLA_ACCESS_TOKEN'], refresh_token=os.environ['DWOLLA_ACCESS_TOKEN'])
-
-    dwollaswagger.configuration.access_token = os.environ['DWOLLA_ACCESS_TOKEN']
-
-    # For UAT/Sandbox
-    client = dwollaswagger.ApiClient('https://api-uat.dwolla.com')
-
-    customer_id = '3eef30d3-5829-499e-80af-0e60e8714e6e'
-
-    customer_url = 'http://api.dwolla.com/customers/{0}'.format(customer_id)
-    customers_api = dwollaswagger.CustomersApi(client)
-
-    token = customers_api.create_funding_sources_token_for_customer(customer_url)
-
-    return flask.render_template('bank.html', token=token.get('token'))
-
 
 @application.route('/privacy')
 def privacy():
@@ -193,65 +154,6 @@ def about_page():
     )
 
 
-# @application.route('/top')
-# def top_donors():
-#     per_page = 50
-#     offset = int(flask.request.args.get('offset', 0))
-#     contributors = Contributor.query.filter(Contributor.is_person).order_by(Contributor.score.desc()).limit(per_page).offset(offset).all()
-#     return flask.render_template(
-#         'top.html',
-#         contributors=contributors,
-#         offset=offset,
-#         per_page=per_page
-#     )
-
-
-
-# @application.route('/campaigns')
-# def all_campaigns():
-#     all_campaigns = Campaign.query.filter(Campaign.leans == None).order_by(Campaign.name).all()
-#     return flask.render_template(
-#         'campaigns.html',
-#         campaigns=all_campaigns
-#     )
-
-
-# @application.route('/campaigns', methods=['PUT'])
-# def update_campaign():
-#     the_json = flask.request.json
-#     the_campaign = Campaign.query.filter(Campaign.name == the_json['name']).first()
-#     the_campaign.leans = the_json['leans']
-#     db.session.add(the_campaign)
-#     db.session.commit()
-#     db.engine.execute("UPDATE donors SET lean = '{lean}' WHERE Name = '{name}'".format(lean=the_json['leans'], name=the_json['name']))
-#     return ''
-
-
-# @application.route('/score_campaigns')
-# def score_campaigns():
-#     execute_queries(TRAIN_ORDER)
-#     db.session.commit()
-#     return 'done!'
-
-
-# @application.route('/contributors/<int:contributor_id>')
-# def show_contributor(contributor_id):
-#     the_contributor = Contributor.query.get(contributor_id)
-#     return flask.render_template(
-#         'show_contributor.html',
-#         contributor=the_contributor
-#     )
-
-
-# @application.route('/campaigns/<int:campaign_id>')
-# def show_campaign(campaign_id):
-#     the_donors = Donor.query.filter(Donor.campaign_id == campaign_id).all()
-#     return flask.render_template(
-#         'show_campaign.html',
-#         donors=the_donors
-#     )
-
-
 @application.errorhandler(404)
 def page_not_found(e):
     if flask_login.current_user.is_authenticated:
@@ -260,25 +162,6 @@ def page_not_found(e):
         return flask.render_template('login.html')
 
 
-# @application.route('/run_names')
-# def run_names():
-#     start = 5970
-#     finish = 5981
-#     while True:
-#         all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
-#         if len(all_donations) == 0:
-#             return ''
-#         for donation in all_donations:
-#             full_name = (donation.First_Name + ' ' + donation.Last_Business_Name)
-#             donation.full_name = full_name
-#             print(str(donation.Result) + ' ' + full_name)
-#             db.session.add(donation)
-#         start += 10
-#         finish += 10
-#         db.session.commit()
-#         print(finish)
-#
-#
 @application.route('/run_campaigns')
 def run_campaigns():
     offset = 83216
@@ -300,30 +183,6 @@ def run_campaigns():
         start += 1000
         finish += 1000
         print(finish)
-#
-# @application.route('/run_contributors')
-# def run_contributors():
-#     start = 0
-#     finish = 1001
-#     while True:
-#         all_donations = Donor.query.filter(and_(Donor.Result < finish, Donor.Result > start)).all()
-#         if len(all_donations) == 0:
-#             return ''
-#         for donation in all_donations:
-#             print(donation.Result)
-#             full_name = donation.First_Name + ' ' + donation.Last_Business_Name
-#             the_contributor = Contributor.query.filter(Contributor.full_name == full_name).first()
-#             if not the_contributor:
-#                 print('creating ' + full_name)
-#                 new_contributor = Contributor()
-#                 new_contributor.Last_Business_Name = donation.Last_Business_Name
-#                 new_contributor.First_Name = donation.First_Name
-#                 new_contributor.full_name = full_name
-#                 db.session.add(new_contributor)
-#                 db.session.commit()
-#         start += 1000
-#         finish += 1000
-#         print(finish)
 
 
 @application.route('/api/campaigns')
@@ -486,14 +345,6 @@ class Campaign(db.Model, BaseModel):
         seen = {}
         for each_contribution in contributions:
             if each_contribution and each_contribution.contributor and (not seen.get(each_contribution.contributor.full_name)):
-                # add_to_score = each_contribution.contributor.get_score()
-                # seen[each_contribution.contributor.full_name] = True
-                # if add_to_score < 0:
-                #     add_to_score = -1
-                #     print(self.name + ' contributor ' + each_contribution.contributor.full_name + ' leans right')
-                # elif add_to_score > 0:
-                #     add_to_score = 1
-                #     print(self.name + ' contributor ' + each_contribution.contributor.full_name + ' leans left')
                 score += each_contribution.contributor.add_to_score
                 print(score)
                 if (score > 10) or (score < -10):
@@ -599,14 +450,6 @@ class Donor(db.Model, BaseModel):
     lean = db.Column(db.String(1))
     campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), index=True, nullable=True)
     full_name = db.Column(db.String(255), index=True, nullable=True)
-    # campaign = db.relationship(
-    #     'Campaign',
-    #     backref=db.backref('contributions', lazy='dynamic')
-    # )
-    # contributor = db.relationship(
-    #     'Contributor',
-    #     backref=db.backref('contributions', lazy='dynamic')
-    # )
 
     def __init__(self):
         self.full_name = self.First_Name + ' ' + self.Last_Business_Name
@@ -635,11 +478,6 @@ class Voter(db.Model, BaseModel):
     VANID = db.Column(db.Integer)
     PreferredEmail = db.Column(db.String(255))
     PreferredPhone = db.Column(db.String(255))
-
-    # contributor = db.relationship(
-    #     'Contributor',
-    #     backref=db.backref('voter_contributions', lazy='dynamic')
-    # )
 
     score = db.Column(db.Float)
     score_guess = db.Column(db.Float)
@@ -692,11 +530,6 @@ class Van(db.Model, BaseModel):
         return json.dumps(final_array_to_return)
 
 
-    # contributor = db.relationship(
-    #     'Contributor',
-    #     backref=db.backref('voter_contributions', lazy='dynamic')
-    # )
-
 class ActivistCodes(db.Model, BaseModel):
     __tablename__ = 'activist_codes'
 
@@ -727,7 +560,6 @@ class APOC(db.Model, BaseModel):
         backref=db.backref('contributions', lazy='dynamic')
     )
 
-    #begin copypasta
     Result = db.Column(db.Integer)
     Date = db.Column(db.String(255))
     Transaction_Type = db.Column(db.String(255))
@@ -763,7 +595,6 @@ class APOC(db.Model, BaseModel):
     campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), index=True, nullable=True)
     full_name = db.Column(db.String(255), index=True, nullable=True)
     PreferredPhone = db.Column(db.String(255))
-
 
 
 class User(db.Model, BaseModel, flask_login.UserMixin):
